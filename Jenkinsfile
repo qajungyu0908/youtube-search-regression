@@ -38,9 +38,16 @@ pipeline {
       script {
         if (params.SEND_TELEGRAM) {
           def statusText = currentBuild.currentResult ?: 'UNKNOWN'
-          def message = "YouTube search regression: ${statusText}\nJob: ${env.JOB_NAME}\nBuild: #${env.BUILD_NUMBER}\n${env.BUILD_URL}"
+          def causes = currentBuild.getBuildCauses()
+          def trigger = 'Jenkins'
+          if (causes) {
+            trigger = causes[0].userName ?: causes[0].userId ?: causes[0].shortDescription ?: trigger
+          }
+          def totalSeconds = ((currentBuild.duration ?: 0) / 1000) as long
+          def period = String.format('%02d:%02d:%02d', (totalSeconds / 3600) as long, ((totalSeconds % 3600) / 60) as long, (totalSeconds % 60) as long)
+          def reportUrl = "${env.BUILD_URL}artifact/reports/report.html"
           withCredentials([usernamePassword(credentialsId: 'jenkins-tg', usernameVariable: 'TG_BOT_TOKEN', passwordVariable: 'TG_CHAT_ID')]) {
-            withEnv(["TELEGRAM_MESSAGE=${message}"]) {
+            withEnv(["TG_BUILD_STATUS=${statusText}", "TG_TRIGGER=${trigger}", "TG_PERIOD=${period}", "TG_BUILD_NUMBER=${env.BUILD_NUMBER}", "TG_REPORT_URL=${reportUrl}"]) {
               sh 'python scripts/notify_telegram.py'
             }
           }
