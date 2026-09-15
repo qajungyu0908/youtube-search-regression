@@ -26,7 +26,7 @@ def main() -> None:
     passed, failed, errors, skipped = pytest_totals(Path("reports/junit.xml"))
     success = os.environ["TG_BUILD_STATUS"] == "SUCCESS"
     heading = "🟢 PASS 🟢" if success else "🔴 FAIL 🔴"
-    report_url = escape(os.environ["TG_REPORT_URL"], quote=True)
+    report_url = os.environ["TG_REPORT_URL"]
     message = (
         f"<b>{heading}</b>\n\n"
         "<b>YouTube Search Regression</b>\n"
@@ -34,7 +34,8 @@ def main() -> None:
         f"∙ Trigger: {escape(os.environ['TG_TRIGGER'])}\n"
         f"∙ Period: {escape(os.environ['TG_PERIOD'])}\n"
         f"∙ Passed: {passed}, Failed: {failed}, Error: {errors}, Skipped: {skipped}\n"
-        f"∙ Log #{escape(os.environ['TG_BUILD_NUMBER'])}: <a href=\"{report_url}\">🗒️ Report</a>"
+        f"∙ Log #{escape(os.environ['TG_BUILD_NUMBER'])}: 🗒️ Report\n"
+        f"{report_url}"
     )
     response = requests.post(
         f"https://api.telegram.org/bot{os.environ['TG_BOT_TOKEN']}/sendMessage",
